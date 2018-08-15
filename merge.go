@@ -185,11 +185,7 @@ func (m *Merge) merge() (bool, string, error) {
 				result = append(result, conflictB...)
 				break resolution
 			case 'u':
-				order := 'a'
-				if len(text) > 1 {
-					order = rune(text[1])
-				}
-				switch order {
+				switch rune(text[1]) {
 				default: // 'a'
 					result = append(result, conflictA...)
 					result = append(result, conflictB...)
