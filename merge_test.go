@@ -7,10 +7,10 @@ import (
 
 func TestA(test *testing.T) {
 	tt := []struct {
-		input                 []string
-		A, X, B               string
-		wantResult            string
-		wantConflict, wantErr bool
+		input              []string
+		A, X, B            string
+		wantResult         string
+		wantMarks, wantErr bool
 	}{
 		{
 			[]string{"m", "u"},
@@ -26,9 +26,9 @@ func TestA(test *testing.T) {
 		m := newMerge(
 			t.A, t.X, t.B,
 			strings.NewReader(strings.Join(t.input, "\n")+"\n"))
-		conflict, result, err := m.merge()
-		if conflict != t.wantConflict {
-			test.Error("Expected conflict:", conflict)
+		marks, result, err := m.merge()
+		if marks != t.wantMarks {
+			test.Error("Expected marks:", t.wantMarks)
 		}
 		if err != nil != t.wantErr {
 			test.Error("Expected error:", err)

@@ -223,5 +223,5 @@ func (m *Merge) merge() (bool, string, error) {
 	m.highlighter.printSlice(merged)
 	result = append(result, merged...)
 
-	return !marked, strings.Join(result, ""), nil
+	return marked, strings.Join(result, ""), nil
 }

@@ -15,7 +15,7 @@ func main() {
 	flag.Parse()
 
 	m := newInteractiveMerge(*local, *base, *other)
-	merged, result, err := m.merge()
+	marks, result, err := m.merge()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func main() {
 	} else {
 		m.highlighter.printString(result)
 	}
-	if !merged {
+	if marks {
 		log.Fatal("Files were not be merged completely.")
 	}
 }
