@@ -40,6 +40,7 @@ type Merge struct {
 	cdiff              *Cdiff
 	highlighter        *Highlighter
 	reader             *bufio.Reader
+	hunger             int
 }
 
 func newInteractiveMerge(a, x, b string) *Merge {
@@ -56,6 +57,7 @@ func newMerge(a, x, b string, input io.Reader) *Merge {
 		newCdiff(),
 		newHighlighter(sample, getFileType(a)),
 		bufio.NewReader(input),
+		1,
 	}
 }
 
@@ -118,28 +120,40 @@ func (m *Merge) merge() (bool, string, error) {
 			continue
 		}
 
-		// conflict
-		conflictA := []string{}
-		for iA < len(A) {
-			conflictA = append(conflictA, A[iA])
-			iA++
-			a, xA = getOp(iA, xA)
-			if a == 'e' {
-				break
-			}
-		}
-		conflictB := []string{}
-		for iB < len(B) {
-			conflictB = append(conflictB, B[iB])
-			iB++
-			b, xB = getOp(iB, xB)
-			if b == 'e' {
-				break
-			}
-		}
-
 		m.highlighter.printSlice(merged)
 		result = append(result, merged...)
+
+		// conflict
+		h := m.hunger
+		conflictA := []string{}
+		for iA < len(A) {
+			a, xA = getOp(iA, xA)
+			if a == 'e' {
+				h--
+				if h <= 0 {
+					break
+				}
+			} else {
+				h = m.hunger
+			}
+			conflictA = append(conflictA, A[iA])
+			iA++
+		}
+		h = m.hunger
+		conflictB := []string{}
+		for iB < len(B) {
+			b, xB = getOp(iB, xB)
+			if b == 'e' {
+				h--
+				if h <= 0 {
+					break
+				}
+			} else {
+				h = m.hunger
+			}
+			conflictB = append(conflictB, B[iB])
+			iB++
+		}
 
 		outputMode := '-'
 	resolution:
