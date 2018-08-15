@@ -126,7 +126,7 @@ func (m *Merge) merge() (bool, string, error) {
 		// conflict
 		h := m.hunger
 		conflictA := []string{}
-		for iA < len(A) {
+		for ; iA < len(A); iA++ {
 			a, xA = getOp(iA, xA)
 			if a == 'e' {
 				h--
@@ -137,11 +137,10 @@ func (m *Merge) merge() (bool, string, error) {
 				h = m.hunger
 			}
 			conflictA = append(conflictA, A[iA])
-			iA++
 		}
 		h = m.hunger
 		conflictB := []string{}
-		for iB < len(B) {
+		for ; iB < len(B); iB++ {
 			b, xB = getOp(iB, xB)
 			if b == 'e' {
 				h--
@@ -152,7 +151,6 @@ func (m *Merge) merge() (bool, string, error) {
 				h = m.hunger
 			}
 			conflictB = append(conflictB, B[iB])
-			iB++
 		}
 
 		outputMode := '-'
