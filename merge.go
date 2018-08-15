@@ -172,6 +172,7 @@ func (m *Merge) merge() (bool, string, error) {
 	c[e/m/s/l]: Change diff cleanup mode
 	o[a/b]: Change diff output mode
 	h: Show this message
+	u[a/b]: Take the union with A/B-side first
 				`)
 			// Take A-side (red edits)
 			case 'r':
@@ -185,13 +186,27 @@ func (m *Merge) merge() (bool, string, error) {
 			case 'b':
 				result = append(result, conflictB...)
 				break resolution
+			case 'u':
+				order := 'a'
+				if len(text) > 1 {
+					order = rune(text[1])
+				}
+				switch order {
+				default: // 'a'
+					result = append(result, conflictA...)
+					result = append(result, conflictB...)
+				case 'b':
+					result = append(result, conflictB...)
+					result = append(result, conflictA...)
+				}
+				break resolution
 			// Mark the conflict and continue
 			case 'm':
-				result = append(result, "<<<<<< "+m.yours+"\n")
+				result = append(result, "<<<<<< LOCAL\n")
 				result = append(result, conflictA...)
 				result = append(result, "======\n")
 				result = append(result, conflictB...)
-				result = append(result, ">>>>>> "+m.other+"\n")
+				result = append(result, ">>>>>> OTHER\n")
 				break resolution
 			// Change diff cleanup mode
 			case 'c':
