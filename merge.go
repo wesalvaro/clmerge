@@ -141,7 +141,6 @@ func (m *Merge) merge() (bool, string, error) {
 
 		m.highlighter.printSlice(merged)
 		result = append(result, merged...)
-		merged = []string{}
 
 		outputMode := '-'
 	resolution:
@@ -163,13 +162,14 @@ func (m *Merge) merge() (bool, string, error) {
 			}
 
 			switch text[0] {
-			case 'h':
+			default: // 'h'
 				fmt.Println(`
 	r/a: Take red/A-side
 	g/b: Take green/B-side
 	m: Mark conflict and continue
 	c[e/m/s/l]: Change diff cleanup mode
 	o[a/b]: Change diff output mode
+	p: Print the Previous merged section
 	h: Show this message
 	u[a/b]: Take the union with A/B-side first
 				`)
@@ -208,6 +208,9 @@ func (m *Merge) merge() (bool, string, error) {
 				result = append(result, ">>>>>> OTHER\n")
 				marked = true
 				break resolution
+			// Print the previous merged section again
+			case 'p':
+				m.highlighter.printSlice(merged)
 			// Change diff cleanup mode
 			case 'c':
 				m.cdiff.CleanupMode = rune(text[1])
@@ -218,6 +221,7 @@ func (m *Merge) merge() (bool, string, error) {
 				continue
 			}
 		}
+		merged = []string{}
 	}
 
 	m.highlighter.printSlice(merged)
