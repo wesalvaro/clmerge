@@ -6,6 +6,7 @@ public class SameLine {
     public static final int B = 2;
 <<<<<< LOCAL
     public static final int C = 3;
+    public static final int E = 4;
 ======
     public static final int D = 3;
 >>>>>> OTHER
