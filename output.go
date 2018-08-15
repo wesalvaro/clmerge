@@ -19,7 +19,7 @@ type Cdiff struct {
 func newCdiff() *Cdiff {
 	return &Cdiff{
 		diffmatchpatch.New(),
-		'-',
+		's',
 	}
 }
 
