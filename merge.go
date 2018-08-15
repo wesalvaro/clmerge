@@ -167,7 +167,7 @@ func (m *Merge) merge() (bool, string, error) {
 	g/b: Take green/B-side
 	m: Mark conflict and continue
 	c[e/m/s/l]: Change diff cleanup mode
-	o[a/b]: Change diff output mode
+	o[r/a/g/b]: Change diff output mode
 	p: Print the Previous merged section
 	h: Show this message
 	u[a/b]: Take the union with A/B-side first
@@ -213,6 +213,12 @@ func (m *Merge) merge() (bool, string, error) {
 			// Change diff output mode
 			case 'o':
 				outputMode = rune(text[1])
+				switch outputMode {
+				case 'r':
+					outputMode = 'a'
+				case 'g':
+					outputMode = 'b'
+				}
 				continue
 			}
 		}
