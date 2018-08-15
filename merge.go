@@ -29,6 +29,11 @@ func getOp(line int, ops []difflib.OpCode) (byte, []difflib.OpCode) {
 	return ops[0].Tag, ops
 }
 
+func getFileType(fileName string) string {
+	parts := strings.Split(fileName, ".")
+	return parts[len(parts)-1]
+}
+
 // Merge merges three files.
 type Merge struct {
 	yours, base, other string
@@ -49,7 +54,7 @@ func newMerge(a, x, b string, input io.Reader) *Merge {
 	return &Merge{
 		a, x, b,
 		newCdiff(),
-		newHighlighter(sample, "python"),
+		newHighlighter(sample, getFileType(a)),
 		bufio.NewReader(input),
 	}
 }
