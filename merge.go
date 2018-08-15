@@ -74,7 +74,6 @@ func (m *Merge) merge() (bool, string, error) {
 	}
 	xA := difflib.NewMatcher(X, A).GetOpCodes()
 	xB := difflib.NewMatcher(X, B).GetOpCodes()
-	fmt.Printf("XA:%v\nXB:%v\n", xA, xB)
 	iA := 0
 	iB := 0
 	var a, b byte
