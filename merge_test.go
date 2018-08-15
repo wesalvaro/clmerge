@@ -13,6 +13,15 @@ func TestA(test *testing.T) {
 		wantMarks, wantErr bool
 	}{
 		{
+			nil,
+			"tests/a.py",
+			"tests/x.py",
+			"tests/b.py",
+			"tests/o.py",
+			false,
+			false,
+		},
+		{
 			[]string{"m", "u"},
 			"tests/conins/SameLine.A.java",
 			"tests/conins/SameLine.X.java",

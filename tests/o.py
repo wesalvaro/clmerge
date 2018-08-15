@@ -2,5 +2,6 @@ def main(argv):
     print len(argv)
 
 
-def foo():
-    print 'hello'
+def bar():
+    print 'world'
+
