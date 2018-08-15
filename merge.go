@@ -21,9 +21,9 @@ func read(fn string) ([]string, error) {
 }
 
 func getOp(line int, ops []difflib.OpCode) (byte, []difflib.OpCode) {
-	if ops[0].I1 > line {
+	if ops[0].J2 < line {
 		panic("line too big")
-	} else if ops[0].I2 == line {
+	} else if ops[0].J2 <= line {
 		ops = ops[1:]
 	}
 	return ops[0].Tag, ops
@@ -74,7 +74,7 @@ func (m *Merge) merge() (bool, string, error) {
 	}
 	xA := difflib.NewMatcher(X, A).GetOpCodes()
 	xB := difflib.NewMatcher(X, B).GetOpCodes()
-	fmt.Printf("XA:%#v\nXB:%#v\n", xA, xB)
+	fmt.Printf("XA:%v\nXB:%v\n", xA, xB)
 	iA := 0
 	iB := 0
 	var a, b byte
@@ -122,21 +122,21 @@ func (m *Merge) merge() (bool, string, error) {
 		// conflict
 		conflictA := []string{}
 		for iA < len(A) {
+			conflictA = append(conflictA, A[iA])
+			iA++
 			a, xA = getOp(iA, xA)
 			if a == 'e' {
 				break
 			}
-			conflictA = append(conflictA, A[iA])
-			iA++
 		}
 		conflictB := []string{}
 		for iB < len(B) {
+			conflictB = append(conflictB, B[iB])
+			iB++
 			b, xB = getOp(iB, xB)
 			if b == 'e' {
 				break
 			}
-			conflictB = append(conflictB, B[iB])
-			iB++
 		}
 
 		conflict = true
