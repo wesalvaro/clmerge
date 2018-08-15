@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/pmezard/go-difflib/difflib"
 )
@@ -48,18 +49,18 @@ func newMerge(a, x, b string) *Merge {
 	}
 }
 
-func (m *Merge) merge() (conflict bool, result []string, err error) {
+func (m *Merge) merge() (bool, string, error) {
 	X, err := read(m.base)
 	if err != nil {
-		return
+		return false, "", err
 	}
 	A, err := read(m.yours)
 	if err != nil {
-		return
+		return false, "", err
 	}
 	B, err := read(m.other)
 	if err != nil {
-		return
+		return false, "", err
 	}
 	xA := difflib.NewMatcher(X, A).GetOpCodes()
 	xB := difflib.NewMatcher(X, B).GetOpCodes()
@@ -67,6 +68,8 @@ func (m *Merge) merge() (conflict bool, result []string, err error) {
 	iA := 0
 	iB := 0
 	var a, b byte
+	conflict := false
+	result := []string{}
 	merged := []string{}
 	for iA < len(A) && iB < len(B) {
 		a, xA = getOp(iA, xA)
@@ -195,8 +198,5 @@ func (m *Merge) merge() (conflict bool, result []string, err error) {
 	m.highlighter.printSlice(merged)
 	result = append(result, merged...)
 
-	fmt.Println("Final:")
-	m.highlighter.printSlice(result)
-
-	return
+	return conflict, strings.Join(result, ""), nil
 }
