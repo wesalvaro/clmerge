@@ -32,6 +32,7 @@ type Merge struct {
 	yours, base, other string
 	cdiff              *Cdiff
 	highlighter        *Highlighter
+	reader             *bufio.Reader
 }
 
 func newMerge(a, x, b string) *Merge {
@@ -40,7 +41,10 @@ func newMerge(a, x, b string) *Merge {
 		log.Fatal(err)
 	}
 	return &Merge{
-		a, x, b, newCdiff(), newHighlighter(sample, "python"),
+		a, x, b,
+		newCdiff(),
+		newHighlighter(sample, "python"),
+		bufio.NewReader(os.Stdin),
 	}
 }
 
@@ -123,49 +127,76 @@ func (m *Merge) merge() (conflict bool, result []string, err error) {
 		}
 
 		conflict = true
-		m.highlighter.print(merged)
+		m.highlighter.printSlice(merged)
 		result = append(result, merged...)
 		merged = []string{}
 
-		fmt.Println("<<<<<< >>>>>>")
-		m.cdiff.print(conflictA, conflictB)
-
-		reader := bufio.NewReader(os.Stdin)
+		outputMode := '-'
 	resolution:
 		for {
+			fmt.Println("<<<<<< >>>>>>")
+			diff := m.cdiff.diff(conflictA, conflictB, outputMode)
+			switch outputMode {
+			case 'a':
+				fallthrough
+			case 'b':
+				m.highlighter.printString(diff)
+			default:
+				fmt.Print(diff)
+			}
 			fmt.Print("% ")
-			text, err := reader.ReadString('\n')
+			text, err := m.reader.ReadString('\n')
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("%q", text[0])
+
 			switch text[0] {
+			case 'h':
+				fmt.Println(`
+	r/a: Take red/A-side
+	g/b: Take green/B-side
+	m: Mark conflict and continue
+	c[e/m/s/l]: Change diff cleanup mode
+	o[a/b]: Change diff output mode
+	h: Show this message
+				`)
+			// Take A-side (red edits)
 			case 'r':
 				fallthrough
 			case 'a':
 				result = append(result, conflictA...)
 				break resolution
+			// Take B-side (green edits)
 			case 'g':
 				fallthrough
 			case 'b':
 				result = append(result, conflictB...)
 				break resolution
+			// Mark the conflict and continue
 			case 'm':
-				result = append(result, "<<<<<<\n")
+				result = append(result, "<<<<<< "+m.yours+"\n")
 				result = append(result, conflictA...)
 				result = append(result, "======\n")
 				result = append(result, conflictB...)
-				result = append(result, ">>>>>>\n")
+				result = append(result, ">>>>>> "+m.other+"\n")
 				break resolution
+			// Change diff cleanup mode
+			case 'c':
+				m.cdiff.CleanupMode = rune(text[1])
+				continue
+			// Change diff output mode
+			case 'o':
+				outputMode = rune(text[1])
+				continue
 			}
 		}
 	}
 
-	m.highlighter.print(merged)
+	m.highlighter.printSlice(merged)
 	result = append(result, merged...)
 
 	fmt.Println("Final:")
-	m.highlighter.print(result)
+	m.highlighter.printSlice(result)
 
 	return
 }
