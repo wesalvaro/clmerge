@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 )
@@ -16,8 +15,10 @@ func main() {
 	flag.Parse()
 
 	m := newInteractiveMerge(*local, *base, *other)
-	conflict, result, err := m.merge()
-	fmt.Println(conflict, err)
+	merged, result, err := m.merge()
+	if err != nil {
+		log.Fatal(err)
+	}
 	if *output != "" {
 		err := ioutil.WriteFile(*output, []byte(result), 0644)
 		if err != nil {
@@ -25,5 +26,8 @@ func main() {
 		}
 	} else {
 		m.highlighter.printString(result)
+	}
+	if !merged {
+		log.Fatal("Files were not be merged completely.")
 	}
 }

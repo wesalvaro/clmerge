@@ -78,7 +78,7 @@ func (m *Merge) merge() (bool, string, error) {
 	iA := 0
 	iB := 0
 	var a, b byte
-	conflict := false
+	marked := false
 	result := []string{}
 	merged := []string{}
 	for iA < len(A) && iB < len(B) {
@@ -139,7 +139,6 @@ func (m *Merge) merge() (bool, string, error) {
 			}
 		}
 
-		conflict = true
 		m.highlighter.printSlice(merged)
 		result = append(result, merged...)
 		merged = []string{}
@@ -207,6 +206,7 @@ func (m *Merge) merge() (bool, string, error) {
 				result = append(result, "======\n")
 				result = append(result, conflictB...)
 				result = append(result, ">>>>>> OTHER\n")
+				marked = true
 				break resolution
 			// Change diff cleanup mode
 			case 'c':
@@ -223,5 +223,5 @@ func (m *Merge) merge() (bool, string, error) {
 	m.highlighter.printSlice(merged)
 	result = append(result, merged...)
 
-	return conflict, strings.Join(result, ""), nil
+	return !marked, strings.Join(result, ""), nil
 }
