@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -36,7 +37,11 @@ type Merge struct {
 	reader             *bufio.Reader
 }
 
-func newMerge(a, x, b string) *Merge {
+func newInteractiveMerge(a, x, b string) *Merge {
+	return newMerge(a, x, b, bufio.NewReader(os.Stdin))
+}
+
+func newMerge(a, x, b string, input io.Reader) *Merge {
 	sample, err := read(a)
 	if err != nil {
 		log.Fatal(err)
@@ -45,7 +50,7 @@ func newMerge(a, x, b string) *Merge {
 		a, x, b,
 		newCdiff(),
 		newHighlighter(sample, "python"),
-		bufio.NewReader(os.Stdin),
+		bufio.NewReader(input),
 	}
 }
 

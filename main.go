@@ -15,7 +15,7 @@ var output = flag.String("output", "", "Output file")
 func main() {
 	flag.Parse()
 
-	m := newMerge(*local, *base, *other)
+	m := newInteractiveMerge(*local, *base, *other)
 	conflict, result, err := m.merge()
 	fmt.Println(conflict, err)
 	if *output != "" {
