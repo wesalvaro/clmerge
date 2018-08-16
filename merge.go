@@ -45,6 +45,15 @@ func getOp(line int, ops []difflib.OpCode) (byte, []difflib.OpCode) {
 	return ops[0].Tag, ops
 }
 
+func getInput(reader *bufio.Reader) string {
+	fmt.Print("% ")
+	text, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal(err)
+	}
+	return text
+}
+
 func getConflict(ops []difflib.OpCode, ll []string, i int, appetite int) (conflict []string) {
 	nonE := i
 	h := appetite
@@ -174,13 +183,10 @@ func (m *Merge) merge() (bool, string, error) {
 				fmt.Print(color.RedString("<<<"), "●", color.GreenString(">>>"))
 				fmt.Print("\n", diff)
 			}
-			fmt.Print("% ")
-			text, err := m.reader.ReadString('\n')
-			if err != nil {
-				log.Fatal(err)
-			}
 
-			switch text[0] {
+			cmd := getInput(m.reader)
+
+			switch cmd[0] {
 			default: // '?'
 				fmt.Println(interactiveUsage)
 			// Take A-side (red edits)
@@ -196,7 +202,7 @@ func (m *Merge) merge() (bool, string, error) {
 				result = append(result, conflictB...)
 				break resolution
 			case 'u':
-				switch rune(text[1]) {
+				switch rune(cmd[1]) {
 				default: // 'a'
 					result = append(result, conflictA...)
 					result = append(result, conflictB...)
@@ -221,16 +227,16 @@ func (m *Merge) merge() (bool, string, error) {
 				m.highlighter.printSlice(merged)
 			// Change diff cleanup mode
 			case 'c':
-				m.cdiff.CleanupMode = rune(text[1])
+				m.cdiff.CleanupMode = rune(cmd[1])
 			case 'h':
-				appetite = int(text[1] - '0')
+				appetite = int(cmd[1] - '0')
 			case 'e':
 				appetite++
 			case 'f':
 				appetite--
 			// Change diff output mode
 			case 'o':
-				outputMode = rune(text[1])
+				outputMode = rune(cmd[1])
 				switch outputMode {
 				case 'r':
 					outputMode = 'a'
