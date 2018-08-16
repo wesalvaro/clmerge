@@ -13,6 +13,21 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 )
 
+const interactiveUsage = `Interactive Command List:
+
+Resolution:
+  r/a: Take red/A-side
+  g/b: Take green/B-side
+	u[r/a/g/b]: Take both with A/B-side first
+	m: Mark conflict and continue
+Display:
+  c[e/m/s/l]: Change diff cleanup mode
+  o[r/a/g/b]: Change diff output mode
+	p: Print the Previous merged section
+Conflicting:
+	h[#]: Re-conflict with different line appetite
+`
+
 func read(fn string) ([]string, error) {
 	x, err := ioutil.ReadFile(fn)
 	if err != nil {
@@ -123,13 +138,11 @@ func (m *Merge) merge() (bool, string, error) {
 	}
 	xA := difflib.NewMatcher(X, A).GetOpCodes()
 	xB := difflib.NewMatcher(X, B).GetOpCodes()
-	iA := 0
-	iB := 0
-	var a, b byte
 	marked := false
 	result := []string{}
 	merged := []string{}
-	for iA < len(A) && iB < len(B) {
+	for iA, iB := 0, 0; iA < len(A) && iB < len(B); {
+		var a, b byte
 		a, xA = getOp(iA, xA)
 		b, xB = getOp(iB, xB)
 		var ok bool
@@ -167,16 +180,7 @@ func (m *Merge) merge() (bool, string, error) {
 
 			switch text[0] {
 			default: // '?'
-				fmt.Println(`
-	r/a: Take red/A-side
-	g/b: Take green/B-side
-	m: Mark conflict and continue
-	c[e/m/s/l]: Change diff cleanup mode
-	o[r/a/g/b]: Change diff output mode
-	p: Print the Previous merged section
-	h[#]: Re-conflict with different line appetite
-	u[a/b]: Take the union with A/B-side first
-				`)
+				fmt.Println(interactiveUsage)
 			// Take A-side (red edits)
 			case 'r':
 				fallthrough
@@ -194,6 +198,8 @@ func (m *Merge) merge() (bool, string, error) {
 				default: // 'a'
 					result = append(result, conflictA...)
 					result = append(result, conflictB...)
+				case 'g':
+					fallthrough
 				case 'b':
 					result = append(result, conflictB...)
 					result = append(result, conflictA...)
