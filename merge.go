@@ -13,21 +13,20 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 )
 
-const interactiveUsage = `Interactive Command List:
-
+const interactiveUsage = `
 Resolution:
   r/a: Take red/A-side
   g/b: Take green/B-side
-	u[r/a/g/b]: Take both with A/B-side first
-	m: Mark conflict and continue
+  u[r/a/g/b]: Take both with A/B-side first
+  m: Mark conflict and continue
 Display:
   c[e/m/s/l]: Change diff cleanup mode
   o[r/a/g/b]: Change diff output mode
-	p: Print the Previous merged section
+  p: Print the Previous merged section
 Conflicting:
-	h[#]: Re-conflict with different line appetite
-	e: Increase line appetite (by one)
-	f: Decrease line appetite (by one)
+  h[#]: Re-conflict with different line appetite
+  e: Increase line appetite (by one)
+  f: Decrease line appetite (by one)
 `
 
 func read(fn string) ([]string, error) {
@@ -100,6 +99,40 @@ func merge(a, b byte, merged, A, B []string, iA, iB int) (bool, []string, int, i
 		return true, append(merged, B[iB]), iA, iB + 1
 	}
 	return false, merged, iA, iB
+}
+
+func resolve(cmd string, result, conflictA, conflictB []string) (bool, []string) {
+	switch cmd[0] {
+	// Take A-side (red edits)
+	case 'r':
+		fallthrough
+	case 'a':
+		return true, append(result, conflictA...)
+	// Take B-side (green edits)
+	case 'g':
+		fallthrough
+	case 'b':
+		return true, append(result, conflictB...)
+	case 'u':
+		switch rune(cmd[1]) {
+		default: // 'a'
+			return true, append(append(result, conflictA...), conflictB...)
+		case 'g':
+			fallthrough
+		case 'b':
+			return true, append(append(result, conflictB...), conflictA...)
+		}
+	// Mark the conflict and continue
+	case 'm':
+		result = append(result, "<<<<<< LOCAL\n")
+		result = append(result, conflictA...)
+		result = append(result, "======\n")
+		result = append(result, conflictB...)
+		result = append(result, ">>>>>> OTHER\n")
+		//marked = true
+		return true, result
+	}
+	return false, result
 }
 
 func getFileType(fileName string) string {
@@ -183,45 +216,11 @@ func (m *Merge) merge() (bool, string, error) {
 				fmt.Print(color.RedString("<<<"), "●", color.GreenString(">>>"))
 				fmt.Print("\n", diff)
 			}
-
 			cmd := getInput(m.reader)
-
+			if ok, result = resolve(cmd, result, conflictA, conflictB); ok {
+				break resolution
+			}
 			switch cmd[0] {
-			default: // '?'
-				fmt.Println(interactiveUsage)
-			// Take A-side (red edits)
-			case 'r':
-				fallthrough
-			case 'a':
-				result = append(result, conflictA...)
-				break resolution
-			// Take B-side (green edits)
-			case 'g':
-				fallthrough
-			case 'b':
-				result = append(result, conflictB...)
-				break resolution
-			case 'u':
-				switch rune(cmd[1]) {
-				default: // 'a'
-					result = append(result, conflictA...)
-					result = append(result, conflictB...)
-				case 'g':
-					fallthrough
-				case 'b':
-					result = append(result, conflictB...)
-					result = append(result, conflictA...)
-				}
-				break resolution
-			// Mark the conflict and continue
-			case 'm':
-				result = append(result, "<<<<<< LOCAL\n")
-				result = append(result, conflictA...)
-				result = append(result, "======\n")
-				result = append(result, conflictB...)
-				result = append(result, ">>>>>> OTHER\n")
-				marked = true
-				break resolution
 			// Print the previous merged section again
 			case 'p':
 				m.highlighter.printSlice(merged)
@@ -243,6 +242,8 @@ func (m *Merge) merge() (bool, string, error) {
 				case 'g':
 					outputMode = 'b'
 				}
+			default: // '?'
+				fmt.Println(interactiveUsage)
 			}
 		}
 		iA += len(conflictA)
