@@ -94,7 +94,7 @@ func (m *Merge) merge() (bool, string, error) {
 			iB++
 			continue
 		// two-sided deletes
-		case a == 'd' || b == 'd':
+		case a == b || a == 'd':
 			iA++
 			iB++
 			continue
