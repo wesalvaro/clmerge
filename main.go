@@ -14,6 +14,10 @@ var output = flag.String("output", "", "Output file")
 func main() {
 	flag.Parse()
 
+	if *local == "" || *base == "" || *other == "" {
+		log.Fatal("Set `local`, `base`, and `other` file flags.")
+	}
+
 	m := newInteractiveMerge(*local, *base, *other)
 	marks, result, err := m.merge()
 	if err != nil {
@@ -22,7 +26,7 @@ func main() {
 	if *output != "" {
 		err := ioutil.WriteFile(*output, []byte(result), 0644)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Could not write output %s", err)
 		}
 	} else {
 		m.highlighter.printString(result)

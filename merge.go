@@ -15,7 +15,7 @@ import (
 func read(fn string) ([]string, error) {
 	x, err := ioutil.ReadFile(fn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Could not read: %s. (%s)", fn, err)
 	}
 	return difflib.SplitLines(string(x)), nil
 }
