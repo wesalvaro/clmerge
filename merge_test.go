@@ -22,7 +22,7 @@ func TestA(test *testing.T) {
 			false,
 		},
 		{
-			[]string{"m", "u"},
+			[]string{"h1", "m", "u"},
 			"tests/conins/SameLine.A.java",
 			"tests/conins/SameLine.X.java",
 			"tests/conins/SameLine.B.java",
