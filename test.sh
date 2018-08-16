@@ -38,5 +38,4 @@ u
 run_sameline "Appetite 5" ".h5" <<< "
 h5
 m
-u
 "
