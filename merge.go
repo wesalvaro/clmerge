@@ -49,6 +49,33 @@ func getConflict(ops []difflib.OpCode, ll []string, i int, appetite int) (confli
 	return
 }
 
+func merge(a, b byte, merged, A, B []string, iA, iB int) (bool, []string, int, int) {
+	switch {
+	// two-sided equals
+	case a == b && a == 'e':
+		return true, append(merged, A[iA]), iA + 1, iB + 1
+	// two-sided deletes
+	case a == b && a == 'd':
+		return true, merged, iA + 1, iB + 1
+	// one-sided deletes
+	case a == 'd' && b == 'e':
+		return true, merged, iA + 1, iB + 1
+	case a == 'e' && b == 'd':
+		return true, merged, iA + 1, iB + 1
+	// one-sided replacements
+	case a == 'r' && b == 'e':
+		return true, append(merged, A[iA]), iA + 1, iB + 1
+	case a == 'e' && b == 'r':
+		return true, append(merged, B[iB]), iA + 1, iB + 1
+	// one-sided inserts
+	case a == 'i' && b == 'e':
+		return true, append(merged, A[iA]), iA + 1, iB
+	case a == 'e' && b == 'i':
+		return true, append(merged, B[iB]), iA, iB + 1
+	}
+	return false, merged, iA, iB
+}
+
 func getFileType(fileName string) string {
 	parts := strings.Split(fileName, ".")
 	return parts[len(parts)-1]
@@ -105,49 +132,11 @@ func (m *Merge) merge() (bool, string, error) {
 	for iA < len(A) && iB < len(B) {
 		a, xA = getOp(iA, xA)
 		b, xB = getOp(iB, xB)
-
-		switch {
-		// two-sided equals
-		case a == b && a == 'e':
-			merged = append(merged, A[iA])
-			iA++
-			iB++
-			continue
-		// two-sided deletes
-		case a == b && a == 'd':
-			iA++
-			iB++
-			continue
-		// one-sided deletes
-		case a == 'd' && b == 'e':
-			iA++
-			iB++
-			continue
-		case a == 'e' && b == 'd':
-			iA++
-			iB++
-			continue
-		// one-sided replacements
-		case a == 'r' && b == 'e':
-			merged = append(merged, A[iA])
-			iA++
-			iB++
-			continue
-		case a == 'e' && b == 'r':
-			merged = append(merged, B[iB])
-			iA++
-			iB++
-			continue
-		// one-sided inserts
-		case a == 'i' && b == 'e':
-			merged = append(merged, A[iA])
-			iA++
-			continue
-		case a == 'e' && b == 'i':
-			merged = append(merged, B[iB])
-			iB++
+		var ok bool
+		if ok, merged, iA, iB = merge(a, b, merged, A, B, iA, iB); ok {
 			continue
 		}
+
 		m.highlighter.printSlice(merged)
 		result = append(result, merged...)
 
