@@ -32,6 +32,15 @@ func TestA(test *testing.T) {
 			true,
 			false,
 		},
+		{
+			[]string{"h1", "m!"},
+			"tests/conins/SameLine.A.java",
+			"tests/conins/SameLine.X.java",
+			"tests/conins/SameLine.B.java",
+			"tests/conins/SameLine.O.mbang.java",
+			true,
+			false,
+		},
 	}
 	for _, t := range tt {
 		m := newMerge(

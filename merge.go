@@ -15,10 +15,10 @@ import (
 
 const interactiveUsage = `
 Resolution:
-  r/a: Take red/A-side
-  g/b: Take green/B-side
+  r/a[!]: Take red/A-side
+  g/b[!]: Take green/B-side
   u[r/a/g/b]: Take both with A/B-side first
-  m: Mark conflict and continue
+	m[!]: Mark conflict
 Display:
   c[e/m/s/l]: Change diff cleanup mode
   o[r/a/g/b]: Change diff output mode
@@ -116,17 +116,29 @@ func merge(a, b byte, merged, A, B []string, iA, iB int) (bool, []string, int, i
 }
 
 func resolve(cmd string, result, conflictA, conflictB []string) (resolution, []string) {
+	always := false
+	if len(cmd) > 1 && cmd[1] == '!' {
+		always = true
+	}
 	switch cmd[0] {
 	// Take A-side (red edits)
 	case 'r':
 		fallthrough
 	case 'a':
-		return resolutionTakeA, append(result, conflictA...)
+		r := resolutionTakeA
+		if always {
+			r = resolutionAlwaysTakeA
+		}
+		return r, append(result, conflictA...)
 	// Take B-side (green edits)
 	case 'g':
 		fallthrough
 	case 'b':
-		return resolutionTakeB, append(result, conflictB...)
+		r := resolutionTakeB
+		if always {
+			r = resolutionAlwaysTakeB
+		}
+		return r, append(result, conflictB...)
 	case 'u':
 		switch rune(cmd[1]) {
 		default: // 'a'
@@ -138,12 +150,16 @@ func resolve(cmd string, result, conflictA, conflictB []string) (resolution, []s
 		}
 	// Mark the conflict and continue
 	case 'm':
+		r := resolutionMark
+		if always {
+			r = resolutionAlwaysMark
+		}
 		result = append(result, "<<<<<< LOCAL\n")
 		result = append(result, conflictA...)
 		result = append(result, "======\n")
 		result = append(result, conflictB...)
 		result = append(result, ">>>>>> OTHER\n")
-		return resolutionMark, result
+		return r, result
 	}
 	return resolutionNone, result
 }
@@ -193,6 +209,7 @@ func (m *Merge) merge() (bool, string, error) {
 	if err != nil {
 		return false, "", err
 	}
+	cmdDefault := ""
 	xA := difflib.NewMatcher(X, A).GetOpCodes()
 	xB := difflib.NewMatcher(X, B).GetOpCodes()
 	marked := false
@@ -229,18 +246,24 @@ func (m *Merge) merge() (bool, string, error) {
 				fmt.Print(color.RedString("<<<"), "●", color.GreenString(">>>"))
 				fmt.Print("\n", diff)
 			}
-			cmd := getInput(m.reader)
+			cmd := cmdDefault
+			if cmd == "" {
+				cmd = getInput(m.reader)
+			}
 			r := resolutionNone
 			r, result = resolve(cmd, result, conflictA, conflictB)
-			switch r {
-			case resolutionNone:
-				break
-			case resolutionAlwaysMark:
-				fallthrough
-			case resolutionMark:
-				marked = true
-				fallthrough
-			default:
+			if r != resolutionNone {
+				switch r {
+				case resolutionAlwaysTakeA:
+					cmdDefault = "a"
+				case resolutionAlwaysTakeB:
+					cmdDefault = "b"
+				case resolutionAlwaysMark:
+					cmdDefault = "m"
+					fallthrough
+				case resolutionMark:
+					marked = true
+				}
 				break resolution
 			}
 			switch cmd[0] {
