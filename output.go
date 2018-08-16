@@ -54,7 +54,7 @@ type Highlighter struct {
 	style     *chroma.Style
 }
 
-func newHighlighter(sample []string, lang string) *Highlighter {
+func newHighlighter(sample []string, lang, style string) *Highlighter {
 	// Determine lexer.
 	l := lexers.Get(lang)
 	if l == nil {
@@ -72,7 +72,7 @@ func newHighlighter(sample []string, lang string) *Highlighter {
 	}
 
 	// Determine style.
-	s := styles.Get("monokai")
+	s := styles.Get(style)
 	if s == nil {
 		s = styles.Fallback
 	}

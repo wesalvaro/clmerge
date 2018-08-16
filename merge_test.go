@@ -33,6 +33,7 @@ func TestA(test *testing.T) {
 	}
 	for _, t := range tt {
 		m := newMerge(
+			"",
 			t.A, t.X, t.B,
 			strings.NewReader(strings.Join(t.input, "\n")+"\n"))
 		marks, result, err := m.merge()
