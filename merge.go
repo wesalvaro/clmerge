@@ -29,6 +29,20 @@ Conflicting:
   f: Decrease line appetite (by one)
 `
 
+type resolution int
+
+const (
+	resolutionNone resolution = iota
+	resolutionMark
+	resolutionTakeA
+	resolutionTakeB
+	resolutionAlwaysMark
+	resolutionAlwaysTakeA
+	resolutionAlwaysTakeB
+	resolutionFirstTakeA
+	resolutionFirstTakeB
+)
+
 func read(fn string) ([]string, error) {
 	x, err := ioutil.ReadFile(fn)
 	if err != nil {
@@ -101,26 +115,26 @@ func merge(a, b byte, merged, A, B []string, iA, iB int) (bool, []string, int, i
 	return false, merged, iA, iB
 }
 
-func resolve(cmd string, result, conflictA, conflictB []string) (bool, []string) {
+func resolve(cmd string, result, conflictA, conflictB []string) (resolution, []string) {
 	switch cmd[0] {
 	// Take A-side (red edits)
 	case 'r':
 		fallthrough
 	case 'a':
-		return true, append(result, conflictA...)
+		return resolutionTakeA, append(result, conflictA...)
 	// Take B-side (green edits)
 	case 'g':
 		fallthrough
 	case 'b':
-		return true, append(result, conflictB...)
+		return resolutionTakeB, append(result, conflictB...)
 	case 'u':
 		switch rune(cmd[1]) {
 		default: // 'a'
-			return true, append(append(result, conflictA...), conflictB...)
+			return resolutionFirstTakeA, append(append(result, conflictA...), conflictB...)
 		case 'g':
 			fallthrough
 		case 'b':
-			return true, append(append(result, conflictB...), conflictA...)
+			return resolutionFirstTakeB, append(append(result, conflictB...), conflictA...)
 		}
 	// Mark the conflict and continue
 	case 'm':
@@ -129,10 +143,9 @@ func resolve(cmd string, result, conflictA, conflictB []string) (bool, []string)
 		result = append(result, "======\n")
 		result = append(result, conflictB...)
 		result = append(result, ">>>>>> OTHER\n")
-		//marked = true
-		return true, result
+		return resolutionMark, result
 	}
-	return false, result
+	return resolutionNone, result
 }
 
 func getFileType(fileName string) string {
@@ -217,7 +230,17 @@ func (m *Merge) merge() (bool, string, error) {
 				fmt.Print("\n", diff)
 			}
 			cmd := getInput(m.reader)
-			if ok, result = resolve(cmd, result, conflictA, conflictB); ok {
+			r := resolutionNone
+			r, result = resolve(cmd, result, conflictA, conflictB)
+			switch r {
+			case resolutionNone:
+				break
+			case resolutionAlwaysMark:
+				fallthrough
+			case resolutionMark:
+				marked = true
+				fallthrough
+			default:
 				break resolution
 			}
 			switch cmd[0] {
