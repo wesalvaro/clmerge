@@ -29,6 +29,27 @@ func getOp(line int, ops []difflib.OpCode) (byte, []difflib.OpCode) {
 	return ops[0].Tag, ops
 }
 
+func getConflict(ops []difflib.OpCode, ll []string, i int, appetite int) (conflict []string) {
+	nonE := i
+	h := appetite
+	tag, ops := getOp(i, ops)
+	for j := i; j < len(ll); j++ {
+		tag, ops = getOp(j, ops)
+		if tag == 'e' {
+			h--
+			if h <= 0 {
+				break
+			}
+		} else {
+			nonE = j - i
+			h = appetite
+		}
+		conflict = append(conflict, ll[j])
+	}
+	conflict = conflict[0 : nonE+1]
+	return
+}
+
 func getFileType(fileName string) string {
 	parts := strings.Split(fileName, ".")
 	return parts[len(parts)-1]
@@ -40,7 +61,7 @@ type Merge struct {
 	cdiff              *Cdiff
 	highlighter        *Highlighter
 	reader             *bufio.Reader
-	hunger             int
+	appetite           int
 }
 
 func newInteractiveMerge(a, x, b string) *Merge {
@@ -57,7 +78,7 @@ func newMerge(a, x, b string, input io.Reader) *Merge {
 		newCdiff(),
 		newHighlighter(sample, getFileType(a)),
 		bufio.NewReader(input),
-		1,
+		5,
 	}
 }
 
@@ -128,44 +149,19 @@ func (m *Merge) merge() (bool, string, error) {
 			iB++
 			continue
 		}
-
 		m.highlighter.printSlice(merged)
 		result = append(result, merged...)
 
 		// conflict
-		h := m.hunger
-		conflictA := []string{}
-		for ; iA < len(A); iA++ {
-			a, xA = getOp(iA, xA)
-			if a == 'e' {
-				h--
-				if h <= 0 {
-					break
-				}
-			} else {
-				h = m.hunger
-			}
-			conflictA = append(conflictA, A[iA])
-		}
-		h = m.hunger
-		conflictB := []string{}
-		for ; iB < len(B); iB++ {
-			b, xB = getOp(iB, xB)
-			if b == 'e' {
-				h--
-				if h <= 0 {
-					break
-				}
-			} else {
-				h = m.hunger
-			}
-			conflictB = append(conflictB, B[iB])
-		}
-
+		appetite := m.appetite
 		outputMode := '-'
+		conflictA := []string{}
+		conflictB := []string{}
 	resolution:
 		for {
 			fmt.Println("<<<<<< >>>>>>")
+			conflictA = getConflict(xA, A, iA, appetite)
+			conflictB = getConflict(xB, B, iB, appetite)
 			diff := m.cdiff.diff(conflictA, conflictB, outputMode)
 			switch outputMode {
 			case 'a':
@@ -182,7 +178,7 @@ func (m *Merge) merge() (bool, string, error) {
 			}
 
 			switch text[0] {
-			default: // 'h'
+			default: // '?'
 				fmt.Println(`
 	r/a: Take red/A-side
 	g/b: Take green/B-side
@@ -190,7 +186,7 @@ func (m *Merge) merge() (bool, string, error) {
 	c[e/m/s/l]: Change diff cleanup mode
 	o[r/a/g/b]: Change diff output mode
 	p: Print the Previous merged section
-	h: Show this message
+	h[#]: Re-conflict with different line appetite
 	u[a/b]: Take the union with A/B-side first
 				`)
 			// Take A-side (red edits)
@@ -230,7 +226,8 @@ func (m *Merge) merge() (bool, string, error) {
 			// Change diff cleanup mode
 			case 'c':
 				m.cdiff.CleanupMode = rune(text[1])
-				continue
+			case 'h':
+				appetite = int(text[1] - '0')
 			// Change diff output mode
 			case 'o':
 				outputMode = rune(text[1])
@@ -240,9 +237,10 @@ func (m *Merge) merge() (bool, string, error) {
 				case 'g':
 					outputMode = 'b'
 				}
-				continue
 			}
 		}
+		iA += len(conflictA)
+		iB += len(conflictB)
 		merged = []string{}
 	}
 
