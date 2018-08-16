@@ -21,9 +21,7 @@ func read(fn string) ([]string, error) {
 }
 
 func getOp(line int, ops []difflib.OpCode) (byte, []difflib.OpCode) {
-	if ops[0].J2 < line {
-		panic("line too big")
-	} else if ops[0].J2 <= line {
+	for ops[0].J2 <= line {
 		ops = ops[1:]
 	}
 	return ops[0].Tag, ops
