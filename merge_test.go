@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+const appetiteForTest = 5
+
 func TestA(test *testing.T) {
 	tt := []struct {
 		input              []string
@@ -35,7 +37,9 @@ func TestA(test *testing.T) {
 		m := newMerge(
 			"",
 			t.A, t.X, t.B,
-			strings.NewReader(strings.Join(t.input, "\n")+"\n"))
+			appetiteForTest,
+			strings.NewReader(strings.Join(t.input, "\n")+"\n"),
+		)
 		marks, result, err := m.merge()
 		if marks != t.wantMarks {
 			test.Error("Expected marks:", t.wantMarks)

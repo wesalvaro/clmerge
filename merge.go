@@ -149,11 +149,11 @@ type Merge struct {
 	appetite           int
 }
 
-func newInteractiveMerge(style, a, x, b string) *Merge {
-	return newMerge(style, a, x, b, bufio.NewReader(os.Stdin))
+func newInteractiveMerge(style, a, x, b string, appetite int) *Merge {
+	return newMerge(style, a, x, b, appetite, bufio.NewReader(os.Stdin))
 }
 
-func newMerge(style, a, x, b string, input io.Reader) *Merge {
+func newMerge(style, a, x, b string, appetite int, input io.Reader) *Merge {
 	sample, err := read(a)
 	if err != nil {
 		log.Fatal(err)
@@ -163,7 +163,7 @@ func newMerge(style, a, x, b string, input io.Reader) *Merge {
 		newCdiff(),
 		newHighlighter(sample, getFileType(a), style),
 		bufio.NewReader(input),
-		5,
+		appetite,
 	}
 }
 

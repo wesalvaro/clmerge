@@ -13,10 +13,12 @@ var local = flag.String("local", "", "Local file")
 var other = flag.String("other", "", "Other file")
 var output = flag.String("output", "", "Output file")
 
+var appetite = flag.Int("appetite", 5, "Line appetite when looking for conflict chunks")
+
 func main() {
 	flag.Parse()
 
-	m := newInteractiveMerge(*style, *local, *base, *other)
+	m := newInteractiveMerge(*style, *local, *base, *other, *appetite)
 	marks, result, err := m.merge()
 	if err != nil {
 		log.Fatal(err)
