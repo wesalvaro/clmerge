@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/pmezard/go-difflib/difflib"
 )
 
@@ -157,7 +158,6 @@ func (m *Merge) merge() (bool, string, error) {
 		conflictB := []string{}
 	resolution:
 		for {
-			fmt.Println("<<<<<< >>>>>>")
 			conflictA = getConflict(xA, A, iA, appetite)
 			conflictB = getConflict(xB, B, iB, appetite)
 			diff := m.cdiff.diff(conflictA, conflictB, outputMode)
@@ -167,7 +167,8 @@ func (m *Merge) merge() (bool, string, error) {
 			case 'b':
 				m.highlighter.printString(diff)
 			default:
-				fmt.Print(diff)
+				fmt.Print(color.RedString("<<<"), "●", color.GreenString(">>>"))
+				fmt.Print("\n", diff)
 			}
 			fmt.Print("% ")
 			text, err := m.reader.ReadString('\n')
