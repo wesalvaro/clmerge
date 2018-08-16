@@ -89,5 +89,5 @@ func (h *Highlighter) printString(content string) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return h.formatter.Format(os.Stdin, h.style, it)
+	return h.formatter.Format(os.Stdout, h.style, it)
 }
