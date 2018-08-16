@@ -229,10 +229,13 @@ func (m *Merge) merge() (bool, string, error) {
 				m.cdiff.CleanupMode = rune(cmd[1])
 			case 'h':
 				appetite = int(cmd[1] - '0')
+				fmt.Printf("Appetite: %d\n", appetite)
 			case 'e':
 				appetite++
+				fmt.Printf("Appetite: %d\n", appetite)
 			case 'f':
 				appetite--
+				fmt.Printf("Appetite: %d\n", appetite)
 			// Change diff output mode
 			case 'o':
 				outputMode = rune(cmd[1])
