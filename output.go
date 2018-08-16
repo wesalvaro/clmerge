@@ -23,7 +23,7 @@ func newCdiff() *Cdiff {
 	}
 }
 
-func (c *Cdiff) diff(a, b []string, outputMode rune) string {
+func (c *Cdiff) diff(a, b []string, outputMode command) string {
 	diffs := c.dmp.DiffMain(strings.Join(a, ""), strings.Join(b, ""), false)
 
 	switch c.CleanupMode {
@@ -40,9 +40,9 @@ func (c *Cdiff) diff(a, b []string, outputMode rune) string {
 	switch outputMode {
 	default: // 'p':
 		return c.dmp.DiffPrettyText(diffs)
-	case 'a':
+	case commandTakeA:
 		return c.dmp.DiffText1(diffs)
-	case 'b':
+	case commandTakeB:
 		return c.dmp.DiffText2(diffs)
 	}
 }

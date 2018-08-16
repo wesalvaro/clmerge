@@ -43,6 +43,25 @@ const (
 	resolutionFirstTakeB
 )
 
+type command rune
+
+const (
+	commandNoop        command = '-'
+	commandTakeRed     command = 'r'
+	commandTakeA       command = 'a'
+	commandTakeGreen   command = 'g'
+	commandTakeB       command = 'b'
+	commandTakeBoth    command = 'u'
+	commandMark        command = 'm'
+	commandAlways      command = '!'
+	commandAppetiteSet command = 'h'
+	commandAppetiteInc command = 'i'
+	commandAppetiteDec command = 'd'
+	commandCleanupMode command = 'c'
+	commandOutputMode  command = 'o'
+	commandReprint     command = 'p'
+)
+
 func read(fn string) ([]string, error) {
 	x, err := ioutil.ReadFile(fn)
 	if err != nil {
@@ -58,13 +77,13 @@ func getOp(line int, ops []difflib.OpCode) (byte, []difflib.OpCode) {
 	return ops[0].Tag, ops
 }
 
-func getInput(reader *bufio.Reader) string {
+func getCommands(reader *bufio.Reader) []command {
 	fmt.Print("% ")
 	text, err := reader.ReadString('\n')
 	if err != nil {
 		log.Fatal(err)
 	}
-	return text
+	return []command(text)
 }
 
 func getConflict(ops []difflib.OpCode, ll []string, i int, appetite int) (conflict []string) {
@@ -115,41 +134,41 @@ func merge(a, b byte, merged, A, B []string, iA, iB int) (bool, []string, int, i
 	return false, merged, iA, iB
 }
 
-func resolve(cmd string, result, conflictA, conflictB []string) (resolution, []string) {
+func resolve(cmds []command, result, conflictA, conflictB []string) (resolution, []string) {
 	always := false
-	if len(cmd) > 1 && cmd[1] == '!' {
+	if len(cmds) > 1 && cmds[1] == commandAlways {
 		always = true
 	}
-	switch cmd[0] {
+	switch cmds[0] {
 	// Take A-side (red edits)
-	case 'r':
+	case commandTakeRed:
 		fallthrough
-	case 'a':
+	case commandTakeA:
 		r := resolutionTakeA
 		if always {
 			r = resolutionAlwaysTakeA
 		}
 		return r, append(result, conflictA...)
 	// Take B-side (green edits)
-	case 'g':
+	case commandTakeGreen:
 		fallthrough
-	case 'b':
+	case commandTakeB:
 		r := resolutionTakeB
 		if always {
 			r = resolutionAlwaysTakeB
 		}
 		return r, append(result, conflictB...)
-	case 'u':
-		switch rune(cmd[1]) {
-		default: // 'a'
+	case commandTakeBoth:
+		switch cmds[1] {
+		default: // commandTakeA
 			return resolutionFirstTakeA, append(append(result, conflictA...), conflictB...)
-		case 'g':
+		case commandTakeGreen:
 			fallthrough
-		case 'b':
+		case commandTakeB:
 			return resolutionFirstTakeB, append(append(result, conflictB...), conflictA...)
 		}
 	// Mark the conflict and continue
-	case 'm':
+	case commandMark:
 		r := resolutionMark
 		if always {
 			r = resolutionAlwaysMark
@@ -209,7 +228,7 @@ func (m *Merge) merge() (bool, string, error) {
 	if err != nil {
 		return false, "", err
 	}
-	cmdDefault := ""
+	cmdDefault := commandNoop
 	xA := difflib.NewMatcher(X, A).GetOpCodes()
 	xB := difflib.NewMatcher(X, B).GetOpCodes()
 	marked := false
@@ -229,7 +248,7 @@ func (m *Merge) merge() (bool, string, error) {
 
 		// conflict
 		appetite := m.appetite
-		outputMode := '-'
+		outputMode := commandNoop
 		conflictA := []string{}
 		conflictB := []string{}
 	resolution:
@@ -246,50 +265,50 @@ func (m *Merge) merge() (bool, string, error) {
 				fmt.Print(color.RedString("<<<"), "●", color.GreenString(">>>"))
 				fmt.Print("\n", diff)
 			}
-			cmd := cmdDefault
-			if cmd == "" {
-				cmd = getInput(m.reader)
+			cmds := []command{cmdDefault}
+			if cmds[0] == commandNoop {
+				cmds = getCommands(m.reader)
 			}
 			r := resolutionNone
-			r, result = resolve(cmd, result, conflictA, conflictB)
+			r, result = resolve(cmds, result, conflictA, conflictB)
 			if r != resolutionNone {
 				switch r {
 				case resolutionAlwaysTakeA:
-					cmdDefault = "a"
+					cmdDefault = commandTakeA
 				case resolutionAlwaysTakeB:
-					cmdDefault = "b"
+					cmdDefault = commandTakeB
 				case resolutionAlwaysMark:
-					cmdDefault = "m"
+					cmdDefault = commandMark
 					fallthrough
 				case resolutionMark:
 					marked = true
 				}
 				break resolution
 			}
-			switch cmd[0] {
+			switch cmds[0] {
 			// Print the previous merged section again
-			case 'p':
+			case commandReprint:
 				m.highlighter.printSlice(merged)
 			// Change diff cleanup mode
-			case 'c':
-				m.cdiff.CleanupMode = rune(cmd[1])
-			case 'h':
-				appetite = int(cmd[1] - '0')
+			case commandCleanupMode:
+				m.cdiff.CleanupMode = rune(cmds[1])
+			case commandAppetiteSet:
+				appetite = int(rune(cmds[1]) - '0')
 				fmt.Printf("Appetite: %d\n", appetite)
-			case 'e':
+			case commandAppetiteInc:
 				appetite++
 				fmt.Printf("Appetite: %d\n", appetite)
-			case 'f':
+			case commandAppetiteDec:
 				appetite--
 				fmt.Printf("Appetite: %d\n", appetite)
 			// Change diff output mode
-			case 'o':
-				outputMode = rune(cmd[1])
+			case commandOutputMode:
+				outputMode = cmds[1]
 				switch outputMode {
-				case 'r':
-					outputMode = 'a'
-				case 'g':
-					outputMode = 'b'
+				case commandTakeRed:
+					outputMode = commandTakeA
+				case commandTakeGreen:
+					outputMode = commandTakeB
 				}
 			default: // '?'
 				fmt.Println(interactiveUsage)
