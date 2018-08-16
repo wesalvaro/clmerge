@@ -26,6 +26,8 @@ Display:
 	p: Print the Previous merged section
 Conflicting:
 	h[#]: Re-conflict with different line appetite
+	e: Increase line appetite (by one)
+	f: Decrease line appetite (by one)
 `
 
 func read(fn string) ([]string, error) {
@@ -222,6 +224,10 @@ func (m *Merge) merge() (bool, string, error) {
 				m.cdiff.CleanupMode = rune(text[1])
 			case 'h':
 				appetite = int(text[1] - '0')
+			case 'e':
+				appetite++
+			case 'f':
+				appetite--
 			// Change diff output mode
 			case 'o':
 				outputMode = rune(text[1])
