@@ -173,11 +173,11 @@ func resolve(cmds []command, result, conflictA, conflictB []string) (resolution,
 		if always {
 			r = resolutionAlwaysMark
 		}
-		result = append(result, "<<<<<< LOCAL\n")
+		result = append(result, "<<<<<<< LOCAL\n")
 		result = append(result, conflictA...)
-		result = append(result, "======\n")
+		result = append(result, "=======\n")
 		result = append(result, conflictB...)
-		result = append(result, ">>>>>> OTHER\n")
+		result = append(result, ">>>>>>> OTHER\n")
 		return r, result
 	}
 	return resolutionNone, result
