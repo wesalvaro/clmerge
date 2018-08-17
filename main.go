@@ -6,10 +6,14 @@ import (
 	"log"
 )
 
+var style = flag.String("style", "vim", "Highlight style")
+
 var base = flag.String("base", "", "Base file")
 var local = flag.String("local", "", "Local file")
 var other = flag.String("other", "", "Other file")
 var output = flag.String("output", "", "Output file")
+
+var appetite = flag.Int("appetite", 5, "Line appetite when looking for conflict chunks")
 
 func main() {
 	flag.Parse()
@@ -18,7 +22,7 @@ func main() {
 		log.Fatal("Set `local`, `base`, and `other` file flags.")
 	}
 
-	m := newInteractiveMerge(*local, *base, *other)
+	m := newInteractiveMerge(*style, *local, *base, *other, *appetite)
 	marks, result, err := m.merge()
 	if err != nil {
 		log.Fatal(err)

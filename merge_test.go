@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+const appetiteForTest = 5
+
 func TestA(test *testing.T) {
 	tt := []struct {
 		input              []string
@@ -22,7 +24,7 @@ func TestA(test *testing.T) {
 			false,
 		},
 		{
-			[]string{"m", "u"},
+			[]string{"h1", "m", "u"},
 			"tests/conins/SameLine.A.java",
 			"tests/conins/SameLine.X.java",
 			"tests/conins/SameLine.B.java",
@@ -30,11 +32,41 @@ func TestA(test *testing.T) {
 			true,
 			false,
 		},
+		{
+			[]string{"h4", "m", "u"},
+			"tests/conins/SameLine.A.java",
+			"tests/conins/SameLine.X.java",
+			"tests/conins/SameLine.B.java",
+			"tests/conins/SameLine.O.java",
+			true,
+			false,
+		},
+		{
+			[]string{"m", "u"},
+			"tests/conins/SameLine.A.java",
+			"tests/conins/SameLine.X.java",
+			"tests/conins/SameLine.B.java",
+			"tests/conins/SameLine.O.h5.java",
+			true,
+			false,
+		},
+		{
+			[]string{"h1", "m!"},
+			"tests/conins/SameLine.A.java",
+			"tests/conins/SameLine.X.java",
+			"tests/conins/SameLine.B.java",
+			"tests/conins/SameLine.O.mbang.java",
+			true,
+			false,
+		},
 	}
 	for _, t := range tt {
 		m := newMerge(
+			"",
 			t.A, t.X, t.B,
-			strings.NewReader(strings.Join(t.input, "\n")+"\n"))
+			appetiteForTest,
+			strings.NewReader(strings.Join(t.input, "\n")+"\n"),
+		)
 		marks, result, err := m.merge()
 		if marks != t.wantMarks {
 			test.Error("Expected marks:", t.wantMarks)
