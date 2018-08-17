@@ -10,6 +10,7 @@ fi
   --base=tests/x.py
 
 ./clmerge \
+  --appetite=1 \
   --output=tests/conins/SameLine.O.java \
    --local=tests/conins/SameLine.A.java \
    --other=tests/conins/SameLine.B.java \
