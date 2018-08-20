@@ -25,13 +25,18 @@ run_sameline() {
   local name="$1"
   local output="$2"
   run "$name" \
-    tests/conins/SameLine.A.java \
-    tests/conins/SameLine.B.java \
-    tests/conins/SameLine.X.java \
-    "tests/conins/SameLine.O$output.java"
+    tests/3/SameLine.A.java \
+    tests/3/SameLine.B.java \
+    tests/3/SameLine.X.java \
+    "tests/3/SameLine.O$output.java"
 }
 
-run "no-conflict" tests/a.py tests/b.py tests/x.py tests/o.py
+f="tests/1"
+run "no-conflict" "$f/a.py" "$f/b.py" "$f/x.py" "$f/o.py"
+
+f="tests/2"
+run "Too Small" "$f/a.go" "$f/b.go" "$f/x.go" "$f/o.go" <<< ""
+
 run_sameline "Appetite 1" "" <<< "
 h1
 m

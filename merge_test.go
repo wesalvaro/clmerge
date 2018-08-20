@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -10,52 +11,68 @@ const appetiteForTest = 5
 func TestA(test *testing.T) {
 	tt := []struct {
 		input              []string
+		id                 int
 		A, X, B            string
 		wantResult         string
 		wantMarks, wantErr bool
 	}{
 		{
 			nil,
-			"tests/a.py",
-			"tests/x.py",
-			"tests/b.py",
-			"tests/o.py",
+			1,
+			"a.py",
+			"x.py",
+			"b.py",
+			"o.py",
+			false,
+			false,
+		},
+		{
+			nil,
+			2,
+			"a.go",
+			"x.go",
+			"b.go",
+			"o.go",
 			false,
 			false,
 		},
 		{
 			[]string{"h1", "m", "u"},
-			"tests/conins/SameLine.A.java",
-			"tests/conins/SameLine.X.java",
-			"tests/conins/SameLine.B.java",
-			"tests/conins/SameLine.O.java",
+			3,
+			"SameLine.A.java",
+			"SameLine.X.java",
+			"SameLine.B.java",
+			"SameLine.O.java",
 			true,
 			false,
 		},
 		{
 			[]string{"h4", "m", "u"},
-			"tests/conins/SameLine.A.java",
-			"tests/conins/SameLine.X.java",
-			"tests/conins/SameLine.B.java",
-			"tests/conins/SameLine.O.java",
+			3,
+			"SameLine.A.java",
+			"SameLine.X.java",
+			"SameLine.B.java",
+			"SameLine.O.java",
 			true,
 			false,
 		},
 		{
 			[]string{"m", "u"},
-			"tests/conins/SameLine.A.java",
-			"tests/conins/SameLine.X.java",
-			"tests/conins/SameLine.B.java",
-			"tests/conins/SameLine.O.h5.java",
+			3,
+			"SameLine.A.java",
+			"SameLine.X.java",
+			"SameLine.B.java",
+			"SameLine.O.h5.java",
 			true,
 			false,
 		},
 		{
 			[]string{"h1", "m!"},
-			"tests/conins/SameLine.A.java",
-			"tests/conins/SameLine.X.java",
-			"tests/conins/SameLine.B.java",
-			"tests/conins/SameLine.O.mbang.java",
+			3,
+			"SameLine.A.java",
+			"SameLine.X.java",
+			"SameLine.B.java",
+			"SameLine.O.mbang.java",
 			true,
 			false,
 		},
@@ -63,7 +80,9 @@ func TestA(test *testing.T) {
 	for _, t := range tt {
 		m := newMerge(
 			"",
-			t.A, t.X, t.B,
+			"tests/"+strconv.Itoa(t.id)+"/"+t.A,
+			"tests/"+strconv.Itoa(t.id)+"/"+t.X,
+			"tests/"+strconv.Itoa(t.id)+"/"+t.B,
 			appetiteForTest,
 			strings.NewReader(strings.Join(t.input, "\n")+"\n"),
 		)
@@ -74,7 +93,7 @@ func TestA(test *testing.T) {
 		if err != nil != t.wantErr {
 			test.Error("Expected error:", err)
 		}
-		wantSplice, err := read(t.wantResult)
+		wantSplice, err := read("tests/" + strconv.Itoa(t.id) + "/" + t.wantResult)
 		if err != nil {
 			test.Fatal(err)
 		}
